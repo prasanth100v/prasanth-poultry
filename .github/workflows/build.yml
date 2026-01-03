@@ -1,18 +1,22 @@
-name: Build React App and Commit Dist.
+name: Build React App and Commit Dist
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write   # ✅ REQUIRED to push from Actions
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+          fetch-depth: 0   # ✅ required for rebase
 
       # 2️⃣ Setup Node.js
       - name: Setup Node.js
@@ -34,9 +38,14 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add dist
+          # Pull latest changes to avoid non-fast-forward error
+          git pull origin main --rebase
+
+          # Force add dist (because it's in .gitignore)
+          git add -f dist
+
+          # Exit if nothing changed
           git diff --cached --quiet && echo "No changes to commit" && exit 0
 
           git commit -m "ci: build dist files"
           git push origin main
-
