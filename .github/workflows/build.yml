@@ -1,6 +1,9 @@
-name: Build React App and Commit Dist 
+name: Build React App and Commit Dist
 
 on:
+  push:
+    branches:
+      - main        # change if your branch name is different
   workflow_dispatch:
 
 jobs:
