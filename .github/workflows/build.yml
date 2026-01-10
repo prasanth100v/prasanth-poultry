@@ -1,4 +1,4 @@
-name: Build React App and Commit Dist 
+name: Build React App and Commit Dist
 
 on:
   push:
