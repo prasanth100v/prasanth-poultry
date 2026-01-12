@@ -8,36 +8,42 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        run: npm run build
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: react-build
           path: dist/
-          
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: >
+          args: |
             -Dsonar.projectKey=vite-react-app
-            -Dsonar.projectName="Vite React App"
+            -Dsonar.projectName=Vite_React_App
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**
             -Dsonar.sourceEncoding=UTF-8
-  
+
   security-check:
     runs-on: self-hosted
     needs: build
