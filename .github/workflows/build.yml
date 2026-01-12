@@ -24,29 +24,26 @@ jobs:
         with:
           name: react-build
           path: dist/
-
-  sonarqube:
-    runs-on: self-hosted
-    needs: build
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: SonarQube Scan (Docker Scanner)
-      run: |
-        docker run --rm \
-          --add-host=host.docker.internal:host-gateway \
-          -e SONAR_HOST_URL=${{ secrets.SONAR_HOST_URL }} \
-          -e SONAR_LOGIN=${{ secrets.SONAR_TOKEN }} \
-          -v "$(pwd):/usr/src" \
-          sonarsource/sonar-scanner-cli \
-          sonar-scanner \
-          -Dsonar.projectKey=my-react-project \
-          -Dsonar.sources=src \
-          -Dsonar.qualitygate.wait=true
-
+          
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=vite-react-app
+            -Dsonar.projectName=Vite React App
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.test.js,**/*.spec.js
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sourceEncoding=UTF-8
+  
   security-check:
     runs-on: self-hosted
-    needs: sonarqube
+    needs: build
     steps:
       - uses: actions/checkout@v4
 
