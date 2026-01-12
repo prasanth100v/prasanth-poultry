@@ -1,29 +1,67 @@
-name: Build React App and Commit Dist 
+name: CICD pipeline 2 (ReactJS)
 
 on:
   push:
-    branches:
-      - main        # change if your branch name is different
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: self-hosted   # your Ubuntu server
-
+    runs-on: self-hosted
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          persist-credentials: true
-          fetch-depth: 0
+          node-version: 18
+          cache: npm
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
+          name: react-build
+          path: build/
 
-      - name: Install dependencies
-        run: npm ci
+  sonarqube:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Build Vite project
-        run: npm run build
+      - run: |
+          sonar-scanner \
+          -Dsonar.projectKey=my-react-project \
+          -Dsonar.sources=src \
+          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+          -Dsonar.qualitygate.wait=true
+
+  security-check:
+    runs-on: self-hosted
+    needs: sonarqube
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+
+  docker-build:
+    runs-on: self-hosted
+    needs: security-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: docker build -t ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} .
+
+      - run: trivy image --exit-code 1 --severity HIGH,CRITICAL \
+          ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
+
+      - run: docker rm -f my_react_container || true
+
+      - run: |
+          docker run -d \
+          --name my_react_container \
+          -p 3000:80 \
+          ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
