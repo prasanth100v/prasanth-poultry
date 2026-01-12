@@ -1,4 +1,4 @@
-name: CICD pipeline 2 (ReactJS)
+name: CICD pipeline 2 (ReactJS) 
 
 on:
   push:
