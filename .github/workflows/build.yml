@@ -2,7 +2,7 @@ name: CICD pipeline 2 (ReactJS)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -52,36 +52,71 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/dist/**
             -Dsonar.sourceEncoding=UTF-8
 
-      - name: SonarQube Quality Gate 
+      - name: SonarQube Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         timeout-minutes: 5
-    
+
   security-check:
     runs-on: self-hosted
     needs: sonarqube
+
     steps:
       - uses: actions/checkout@v4
 
-      - run: trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+      - name: Trivy filesystem scan
+        run: trivy fs --exit-code 1 --severity HIGH,CRITICAL .
 
   docker-build:
     runs-on: self-hosted
     needs: security-check
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-      - run: docker build -t ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} .
+      - name: Build Docker image
+        run: |
+          IMAGE_NAME=prasanth-poultry
+          IMAGE_TAG=$(git rev-parse --short HEAD)
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
-      - run: trivy image --exit-code 1 --severity HIGH,CRITICAL \
-          ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
+      - name: Trivy image scan (HIGH, CRITICAL)
+        run: |
+          IMAGE_NAME=prasanth-poultry
+          IMAGE_TAG=$(git rev-parse --short HEAD)
+          trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG
 
-      - run: docker rm -f my_react_container || true
+      - name: Remove existing container (if any)
+        run: docker rm -f my_react_container || true
 
-      - run: |
+      - name: Run Docker container
+        run: |
+          IMAGE_NAME=prasanth-poultry
+          IMAGE_TAG=$(git rev-parse --short HEAD)
           docker run -d \
-          --name my_react_container \
-          -p 3000:80 \
-          ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
+            --name my_react_container \
+            -p 3000:80 \
+            $IMAGE_NAME:$IMAGE_TAG
+
+
+ # docker-build:
+   # runs-on: self-hosted
+   # needs: security-check
+   # steps:
+   #   - uses: actions/checkout@v4
+
+   #   - run: docker build -t ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }} .
+
+   #   - run: trivy image --exit-code 1 --severity HIGH,CRITICAL \
+    #      ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
+
+    #  - run: docker rm -f my_react_container || true
+
+    #  - run: |
+     #     docker run -d \
+      #    --name my_react_container \
+      #    -p 3000:80 \
+     #     ${{ secrets.DOCKER_REPOSITORY }}:${{ github.sha }}
