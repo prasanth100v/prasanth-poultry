@@ -31,6 +31,14 @@ jobs:
           name: react-build
           path: dist/
 
+  sonarqube:
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
         env:
