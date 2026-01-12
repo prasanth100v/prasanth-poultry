@@ -33,7 +33,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=vite-react-app
-            -Dsonar.projectName=Vite React App
+            -Dsonar.projectName="Vite React App"
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**
             -Dsonar.tests=src
