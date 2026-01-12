@@ -29,14 +29,19 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - run: |
+    - name: SonarQube Scan (Docker Scanner)
+      run: |
+        docker run --rm \
+          --add-host=host.docker.internal:host-gateway \
+          -e SONAR_HOST_URL=${{ secrets.SONAR_HOST_URL }} \
+          -e SONAR_LOGIN=${{ secrets.SONAR_TOKEN }} \
+          -v "$(pwd):/usr/src" \
+          sonarsource/sonar-scanner-cli \
           sonar-scanner \
           -Dsonar.projectKey=my-react-project \
           -Dsonar.sources=src \
-          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
           -Dsonar.qualitygate.wait=true
 
   security-check:
