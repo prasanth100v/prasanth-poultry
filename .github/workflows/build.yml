@@ -54,7 +54,7 @@ jobs:
 
   security-check:
     runs-on: self-hosted
-    needs: build
+    needs: sonarqube
     steps:
       - uses: actions/checkout@v4
 
