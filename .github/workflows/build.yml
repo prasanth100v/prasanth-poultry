@@ -77,6 +77,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      # ✅ THIS STEP SOLVES YOUR ERROR
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: dist
+
       - name: Docker login
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
