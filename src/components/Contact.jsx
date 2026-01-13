@@ -2,7 +2,7 @@ export default function Contact() {
   return (
     <section className="contact">
       <h2>Contact Us</h2>
-      <p>📞 Phone: +91 81869 60100</p>
+      <p>📞 Phone: +91 81869 601001</p>
       <p>📍 Location: Nagari, Andhra Pradesh, India</p>
     </section>
   );
