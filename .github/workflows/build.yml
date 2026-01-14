@@ -77,7 +77,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # ✅ THIS STEP SOLVES YOUR ERROR
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -98,7 +97,7 @@ jobs:
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
           docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
 
-      - name: Trivy image scan (HIGH, CRITICAL)
+      - name: Trivy image scan
         run: |
           IMAGE_NAME=prasanth100v/prasanth-poultry
           IMAGE_TAG=$(git rev-parse --short HEAD)
@@ -109,23 +108,19 @@ jobs:
       - name: Push Docker image
         run: |
           IMAGE_NAME=prasanth100v/prasanth-poultry
-          IMAGE_TAG=$(git rev-parse --short HEAD)
 
-          docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-      - name: Remove existing container (if any)
-        run: docker rm -f my_react_container || true
-
-      - name: Run Docker container
+      # 🚀 DEPLOY TO MINIKUBE
+      - name: Deploy to Minikube (Kubernetes)
         run: |
-          IMAGE_NAME=prasanth100v/prasanth-poultry
-          IMAGE_TAG=$(git rev-parse --short HEAD)
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
 
-          docker run -d \
-            --name my_react_container \
-            -p 3000:80 \
-            $IMAGE_NAME:$IMAGE_TAG
+      - name: Verify deployment
+        run: |
+          kubectl get pods
+          kubectl get svc
 
  # docker-build:
    # runs-on: self-hosted
